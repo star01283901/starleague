@@ -1,7 +1,7 @@
 <div align="center">
 
-!(star1.png)
-!(star2.png)
+![star1](star1.png)
+![star2](star2.png)
 
 **A local League of Legends client utility with a clean web UI.**  
 Auto accept, instalock, autoban, profile customization, plugin loader, and more.
