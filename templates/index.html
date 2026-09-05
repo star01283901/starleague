@@ -1,0 +1,2083 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>star</title>
+  <link rel="icon" href="/favicon.ico" />
+  <style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── Night theme (default) ── */
+:root {
+  --bg:      #0a0a0c;
+  --surface: #111114;
+  --raised:  #17171b;
+  --border:  #222228;
+  --border2: #2e2e36;
+  --text:    #e2e2e6;
+  --muted:   #666672;
+  --dim:     #3a3a44;
+  --accent:  #c8f542;
+  --accent2: #a8d020;
+  --red:     #f54242;
+  --green:   #42c87a;
+  --yellow:  #f5c542;
+  --blue:    #4299f5;
+  --font:    'JetBrains Mono', 'Fira Mono', 'Cascadia Code', monospace;
+}
+
+/* ── Light theme ── */
+[data-theme='light'] {
+  --bg:      #f0f0f4;
+  --surface: #ffffff;
+  --raised:  #f7f7fa;
+  --border:  #dddde4;
+  --border2: #c8c8d4;
+  --text:    #18181c;
+  --muted:   #7070808;
+  --muted:   #606070;
+  --dim:     #aaaabc;
+  --accent:  #5a9e00;
+  --accent2: #4a8800;
+  --red:     #d42020;
+  --green:   #1a9a50;
+  --yellow:  #b8860b;
+  --blue:    #1a6ac8;
+}
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 13px;
+  line-height: 1.5;
+  overflow: hidden;
+}
+
+/* ── layout ── */
+.shell {
+  display: grid;
+  grid-template-rows: 42px 1fr 130px;
+  grid-template-columns: 220px 1fr;
+  height: 100vh;
+}
+
+/* ── header ── */
+.header {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.brand {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+  text-transform: lowercase;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-icon {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 6px var(--accent));
+}
+
+.brand span { color: var(--muted); font-weight: 400; }
+
+.connection {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--dim);
+  transition: background 0.3s;
+}
+.dot.live { background: var(--green); box-shadow: 0 0 6px var(--green); }
+
+/* ── sidebar ── */
+.sidebar {
+  border-right: 1px solid var(--border);
+  background: var(--surface);
+  overflow-y: auto;
+  padding: 12px 0;
+}
+
+.sidebar::-webkit-scrollbar { width: 3px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--border2); }
+
+.category-label {
+  padding: 14px 16px 4px;
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 16px;
+  cursor: pointer;
+  color: var(--muted);
+  transition: color 0.15s, background 0.15s;
+  user-select: none;
+  border-left: 2px solid transparent;
+}
+.nav-item:hover { color: var(--text); background: var(--raised); }
+.nav-item.active {
+  color: var(--text);
+  background: var(--raised);
+  border-left-color: var(--accent);
+}
+
+.nav-num { font-size: 10px; color: var(--dim); margin-right: 10px; min-width: 16px; }
+.nav-name { flex: 1; }
+
+.nav-badge {
+  font-size: 9px;
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+.badge-on  { background: rgba(66,200,122,0.15); color: var(--green); }
+.badge-off { background: rgba(102,102,114,0.1); color: var(--dim); }
+
+/* ── main ── */
+.main { display: flex; flex-direction: column; overflow: hidden; }
+
+.panel {
+  flex: 1;
+  padding: 28px 32px;
+  overflow-y: auto;
+  display: none;
+}
+.panel.active { display: block; }
+
+.panel::-webkit-scrollbar { width: 3px; }
+.panel::-webkit-scrollbar-track { background: transparent; }
+.panel::-webkit-scrollbar-thumb { background: var(--border2); }
+
+.panel-title {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  margin-bottom: 6px;
+  color: var(--text);
+}
+
+.panel-desc {
+  color: var(--muted);
+  font-size: 12px;
+  margin-bottom: 28px;
+  max-width: 500px;
+  line-height: 1.7;
+}
+
+/* ── cards ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 20px 22px;
+  margin-bottom: 12px;
+}
+
+.card-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.card-label { font-size: 12px; font-weight: 600; color: var(--text); }
+.card-sub   { font-size: 11px; color: var(--muted); margin-top: 3px; }
+
+/* ── toggle ── */
+.toggle {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.toggle input { opacity: 0; width: 0; height: 0; }
+
+.toggle-track {
+  position: absolute;
+  inset: 0;
+  background: var(--raised);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  transition: background 0.2s, border-color 0.2s;
+  cursor: pointer;
+}
+.toggle-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 12px;
+  height: 12px;
+  background: var(--muted);
+  border-radius: 50%;
+  transition: transform 0.2s, background 0.2s;
+}
+.toggle input:checked + .toggle-track { background: rgba(200,245,66,0.15); border-color: var(--accent); }
+.toggle input:checked + .toggle-track .toggle-thumb { transform: translateX(16px); background: var(--accent); }
+
+[data-theme='light'] .toggle input:checked + .toggle-track { background: rgba(90,158,0,0.12); }
+
+/* ── inputs ── */
+.input-group { margin-top: 14px; }
+
+.input-label {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 5px;
+}
+
+input[type="text"], input[type="number"], select, textarea {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border2);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 12px;
+  padding: 8px 10px;
+  outline: none;
+  transition: border-color 0.15s;
+  border-radius: 0;
+  -webkit-appearance: none;
+}
+input[type="text"]:focus, input[type="number"]:focus, select:focus, textarea:focus { border-color: var(--accent); }
+select option { background: var(--raised); }
+textarea { resize: vertical; min-height: 80px; }
+
+/* ── buttons ── */
+.btn {
+  padding: 8px 18px;
+  font-family: var(--font);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.btn-primary { background: var(--accent); color: #0a0a0c; }
+.btn-primary:hover { background: var(--accent2); }
+.btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border2); }
+.btn-ghost:hover { color: var(--text); border-color: var(--dim); }
+.btn-danger { background: rgba(245,66,66,0.12); color: var(--red); border: 1px solid rgba(245,66,66,0.2); }
+.btn-danger:hover { background: rgba(245,66,66,0.22); }
+.btn-row { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+
+/* picker button */
+.btn-picker {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  background: var(--bg);
+  border: 1px solid var(--border2);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 12px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+  margin-top: 14px;
+}
+.btn-picker:hover { border-color: var(--accent); }
+.picker-label { color: var(--muted); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; }
+.picker-value { font-weight: 600; color: var(--accent); margin-left: 6px; margin-right: auto; }
+.picker-arrow { color: var(--muted); }
+
+/* inline row */
+.inline-row { display: flex; gap: 8px; margin-top: 14px; align-items: flex-end; }
+.inline-row input { flex: 1; }
+
+/* stepper */
+.stepper {
+  display: flex;
+  align-items: center;
+  background: var(--bg);
+  border: 1px solid var(--border2);
+  overflow: hidden;
+}
+.stepper button {
+  width: 30px;
+  height: 30px;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-size: 15px;
+  cursor: pointer;
+  font-family: var(--font);
+  transition: background 0.15s;
+}
+.stepper button:hover { background: var(--raised); }
+.stepper span {
+  min-width: 48px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+}
+.stepper-list { display: flex; flex-direction: column; gap: 10px; max-width: 320px; }
+.stepper-item { display: flex; align-items: center; justify-content: space-between; }
+.stepper-label { font-size: 12px; color: var(--text); }
+
+/* inline badge */
+.inline-badge {
+  font-size: 9px;
+  padding: 2px 6px;
+  border-radius: 2px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+
+/* ── activity ── */
+.activity {
+  grid-column: 1 / -1;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.activity-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 20px 4px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.activity-title {
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.activity-tag {
+  font-size: 9px;
+  padding: 2px 6px;
+  background: var(--raised);
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  border: 1px solid var(--border2);
+}
+
+.activity-log {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.activity-log::-webkit-scrollbar { width: 3px; }
+.activity-log::-webkit-scrollbar-track { background: transparent; }
+.activity-log::-webkit-scrollbar-thumb { background: var(--border2); }
+
+.log-entry {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.log-time { color: var(--dim); font-size: 10px; flex-shrink: 0; }
+.log-msg  { color: var(--muted); }
+.log-msg.success { color: var(--green); }
+.log-msg.error   { color: var(--red); }
+.log-msg.warning { color: var(--yellow); }
+.log-msg.info    { color: var(--blue); }
+.log-msg.system  { color: var(--accent); }
+
+/* ── toast ── */
+.toast-container {
+  position: fixed;
+  bottom: 150px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 999;
+}
+.toast {
+  padding: 10px 16px;
+  font-size: 11px;
+  font-family: var(--font);
+  background: var(--raised);
+  border: 1px solid var(--border2);
+  border-left: 2px solid var(--accent);
+  color: var(--text);
+  animation: slideIn 0.2s ease, fadeOut 0.3s ease 2.7s forwards;
+  max-width: 300px;
+}
+.toast.error   { border-left-color: var(--red); }
+.toast.success { border-left-color: var(--green); }
+
+@keyframes slideIn { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; } }
+@keyframes fadeOut { to { opacity: 0; } }
+
+/* ── confirm overlay ── */
+.overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+}
+.overlay.show { display: flex; }
+
+.dialog {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  padding: 28px;
+  min-width: 320px;
+  max-width: 420px;
+}
+.dialog-title { font-size: 14px; font-weight: 700; margin-bottom: 10px; }
+.dialog-body  { font-size: 12px; color: var(--muted); line-height: 1.7; margin-bottom: 20px; }
+.dialog-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+/* ── modal ── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+}
+.modal-overlay.hidden { display: none; }
+
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  width: 90vw;
+  max-width: 560px;
+  max-height: 84vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.modal-header {
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.modal-title {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--text);
+}
+.modal-close {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 14px;
+  cursor: pointer;
+  font-family: var(--font);
+}
+.modal-close:hover { color: var(--text); }
+
+.modal-body {
+  padding: 14px 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.modal-search {
+  width: 100%;
+  padding: 8px 10px;
+  background: var(--bg);
+  border: 1px solid var(--border2);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 12px;
+  outline: none;
+  border-radius: 0;
+}
+.modal-search:focus { border-color: var(--accent); }
+
+.modal-stats {
+  font-size: 10px;
+  color: var(--muted);
+  display: flex;
+  justify-content: space-between;
+  letter-spacing: 0.05em;
+}
+
+.modal-list-wrap {
+  max-height: 400px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.modal-list-wrap::-webkit-scrollbar { width: 3px; }
+.modal-list-wrap::-webkit-scrollbar-track { background: transparent; }
+.modal-list-wrap::-webkit-scrollbar-thumb { background: var(--border2); }
+
+.modal-item {
+  padding: 8px 10px;
+  background: var(--raised);
+  color: var(--text);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.1s;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid transparent;
+}
+.modal-item:hover { border-color: var(--accent); color: var(--accent); }
+
+/* icon grid */
+.icon-grid {
+  max-height: 400px;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(68px, 1fr));
+  gap: 6px;
+}
+.icon-grid::-webkit-scrollbar { width: 3px; }
+.icon-grid::-webkit-scrollbar-thumb { background: var(--border2); }
+
+.icon-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 4px;
+  background: var(--raised);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+.icon-tile:hover { border-color: var(--accent); }
+.icon-tile img { width: 44px; height: 44px; object-fit: contain; border-radius: 50%; }
+.icon-tile span { font-size: 9px; color: var(--muted); letter-spacing: 0.05em; }
+
+.divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+
+/* ── theme pills ── */
+.theme-pill-group { display: flex; gap: 8px; margin-top: 10px; }
+.theme-pill {
+  padding: 6px 16px;
+  background: transparent;
+  border: 1px solid var(--border2);
+  color: var(--muted);
+  font-family: var(--font);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.theme-pill:hover { color: var(--text); border-color: var(--dim); }
+.theme-pill.active { background: var(--accent); color: #0a0a0c; border-color: var(--accent); }
+
+/* ── Loader / Plugin panel ── */
+.plugin-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.plugin-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  transition: border-color 0.15s;
+}
+.plugin-item:hover { border-color: var(--border2); }
+.plugin-item.plugin-enabled { border-left: 2px solid var(--accent); }
+.plugin-item.plugin-disabled { border-left: 2px solid var(--dim); opacity: 0.7; }
+
+.plugin-info { flex: 1; min-width: 0; }
+.plugin-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.plugin-meta {
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 2px;
+  letter-spacing: 0.04em;
+}
+.plugin-desc {
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 2px;
+  font-style: italic;
+}
+.plugin-meta a { color: var(--accent); text-decoration: none; }
+.plugin-meta a:hover { text-decoration: underline; }
+
+.plugin-empty {
+  color: var(--muted);
+  font-size: 12px;
+  padding: 24px;
+  text-align: center;
+  border: 1px dashed var(--border2);
+}
+
+.plugin-status {
+  font-size: 9px;
+  padding: 2px 6px;
+  border-radius: 2px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  flex-shrink: 0;
+}
+.plugin-status.on  { background: rgba(66,200,122,0.15); color: var(--green); }
+.plugin-status.off { background: rgba(102,102,114,0.1); color: var(--dim); }
+
+/* path input row */
+.path-row {
+  display: flex;
+  gap: 6px;
+  align-items: flex-end;
+  margin-top: 10px;
+}
+.path-row input { flex: 1; }
+  </style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- header -->
+  <header class="header">
+    <div class="brand">
+      <img src="/static/favicon.ico" class="brand-icon" alt="star" />
+      star <span>/ league utility</span>
+    </div>
+    <div class="connection">
+      <div class="dot" id="dot"></div>
+      <span id="account-text">detecting client...</span>
+    </div>
+  </header>
+
+  <!-- sidebar -->
+  <nav class="sidebar" id="sidebar"></nav>
+
+  <!-- main panels -->
+  <div class="main" id="main-panels">
+
+    <!-- 1 auto accept -->
+    <div class="panel" id="panel-1">
+      <div class="panel-title">Auto Accept</div>
+      <div class="panel-desc">Automatically accepts ready checks the moment a match is found.</div>
+      <div class="card">
+        <div class="card-row">
+          <div>
+            <div class="card-label">Auto Accept</div>
+            <div class="card-sub" id="aa-sub">Disarmed</div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="toggle-auto-accept" onchange="toggleAutoAccept()" />
+            <div class="toggle-track"><div class="toggle-thumb"></div></div>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2 instalock -->
+    <div class="panel" id="panel-2">
+      <div class="panel-title">Instalock</div>
+      <div class="panel-desc">Locks your chosen champion the moment champion select opens.</div>
+      <div class="card">
+        <div class="card-row">
+          <div>
+            <div class="card-label">Instalock</div>
+            <div class="card-sub">Target: <strong id="val-instalock-champ">Random</strong></div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="toggle-instalock" onchange="toggleInstalock()" />
+            <div class="toggle-track"><div class="toggle-thumb"></div></div>
+          </label>
+        </div>
+        <button class="btn-picker" onclick="openChampionPicker('instalock')">
+          <span class="picker-label">Champion:</span>
+          <span class="picker-value" id="val-instalock-champ-picker">Random</span>
+          <span class="picker-arrow">›</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 3 autoban -->
+    <div class="panel" id="panel-3">
+      <div class="panel-title">AutoBan</div>
+      <div class="panel-desc">Automatically bans your configured champion during the ban phase.</div>
+      <div class="card">
+        <div class="card-row">
+          <div>
+            <div class="card-label">AutoBan</div>
+            <div class="card-sub">Target: <strong id="val-autoban-champ">None</strong></div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="toggle-autoban" onchange="toggleAutoBan()" />
+            <div class="toggle-track"><div class="toggle-thumb"></div></div>
+          </label>
+        </div>
+        <button class="btn-picker" onclick="openChampionPicker('autoban')">
+          <span class="picker-label">Champion:</span>
+          <span class="picker-value" id="val-autoban-champ-picker">None</span>
+          <span class="picker-arrow">›</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 4 lobby reveal -->
+    <div class="panel" id="panel-4">
+      <div class="panel-title">Lobby Reveal</div>
+      <div class="panel-desc">Opens the current champion-select lobby on your chosen analytics provider.</div>
+      <div class="card">
+        <div class="card-label">Provider</div>
+        <div class="input-group">
+          <select id="reveal-provider">
+            <option value="porofessor">Porofessor</option>
+            <option value="opgg">OP.GG</option>
+            <option value="ugg">U.GG</option>
+          </select>
+        </div>
+        <div class="btn-row"><button class="btn btn-primary" onclick="submitReveal()">Open Lobby</button></div>
+      </div>
+    </div>
+
+    <!-- 5 dodge -->
+    <div class="panel" id="panel-5">
+      <div class="panel-title">Dodge</div>
+      <div class="panel-desc">Leaves the current champion select without restarting the client. You will take an LP penalty.</div>
+      <div class="card">
+        <div class="card-label" style="color:var(--red)">Destructive Action</div>
+        <div class="card-sub">This will immediately dodge the current champion select. There is no undo.</div>
+        <div class="btn-row">
+          <button class="btn btn-danger" onclick="confirmDodge()">Dodge Now</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6 restart ux -->
+    <div class="panel" id="panel-6">
+      <div class="panel-title">Restart Client UX</div>
+      <div class="panel-desc">Reloads the League Client interface without closing the game process.</div>
+      <div class="card">
+        <div class="card-label" style="color:var(--yellow)">Client Action</div>
+        <div class="card-sub">The client UI will close and reopen. Any unsaved client state will be lost.</div>
+        <div class="btn-row">
+          <button class="btn btn-danger" onclick="submitRestartUX()">Restart UX</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7 chat -->
+    <div class="panel" id="panel-7">
+      <div class="panel-title">Disconnect Chat</div>
+      <div class="panel-desc">Suspends the Riot chat connection so you appear offline to friends.</div>
+      <div class="card">
+        <div class="card-row">
+          <div>
+            <div class="card-label">Appear Offline</div>
+            <div class="card-sub">Disconnects the chat service</div>
+          </div>
+          <span class="inline-badge badge-off" id="badge-chat-state">LIVE</span>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="submitToggleChat()">Toggle Chat</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 8 remove friends -->
+    <div class="panel" id="panel-8">
+      <div class="panel-title">Remove All Friends</div>
+      <div class="panel-desc">Permanently removes every friend from the account. This action cannot be undone.</div>
+      <div class="card">
+        <div class="card-label" style="color:var(--red)">Destructive Action</div>
+        <div class="card-sub">All friends will be permanently removed. There is no undo.</div>
+        <div class="btn-row">
+          <button class="btn btn-danger" onclick="confirmRemoveFriends()">Remove All Friends</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 9 client icon -->
+    <div class="panel" id="panel-9">
+      <div class="panel-title">Client-Only Icon</div>
+      <div class="panel-desc">Browse and apply any League profile icon. Changes only what's shown inside your local client — not your Riot account.</div>
+      <div class="card">
+        <div class="card-label">Browse Icons</div>
+        <div class="card-sub">Pick from the full icon library. Applies as client-only.</div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="openIconPicker()">Browse All Icons ›</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 10 background -->
+    <div class="panel" id="panel-10">
+      <div class="panel-title">Profile Background</div>
+      <div class="panel-desc">Browse and apply any of the 2,000+ champion splash arts as your profile background.</div>
+      <div class="card">
+        <div class="card-label">Browse Skins</div>
+        <div class="card-sub">Search by champion or skin name.</div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="openSkinPicker()">Browse All Skins ›</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 11 riot id -->
+    <div class="panel" id="panel-11">
+      <div class="panel-title">Riot ID</div>
+      <div class="panel-desc">Updates the game name and tagline shown on your Riot account. Both fields required.</div>
+      <div class="card">
+        <div class="card-label">Game Name</div>
+        <div class="input-group">
+          <input type="text" id="input-riot-name" placeholder="YourGameName" maxlength="16" />
+        </div>
+        <div class="card-label" style="margin-top:14px">Tag Line</div>
+        <div class="input-group">
+          <input type="text" id="input-riot-tag" placeholder="EUW" maxlength="5" style="max-width:140px" />
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="submitRiotID()">Update</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 12 profile badges -->
+    <div class="panel" id="panel-12">
+      <div class="panel-title">Profile Badges</div>
+      <div class="panel-desc">Customize or glitch your profile badge slots.</div>
+      <div class="card">
+        <div class="card-label">Mode</div>
+        <div class="input-group">
+          <select id="select-badge-mode" onchange="onBadgeModeChange()">
+            <option value="empty">Clear all badge slots</option>
+            <option value="copy">Duplicate 1st badge to all slots</option>
+            <option value="glitched">Glitched ID (0–5)</option>
+          </select>
+        </div>
+        <div class="input-group" id="badge-gid-wrap" style="display:none;">
+          <input type="number" id="input-badge-gid" placeholder="ID (0-5)" min="0" max="5" value="0" style="max-width:120px" />
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="submitBadges()">Apply</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 13 status message -->
+    <div class="panel" id="panel-13">
+      <div class="panel-title">Status Message</div>
+      <div class="panel-desc">Set the status message visible to friends on your friend list.</div>
+      <div class="card">
+        <div class="card-label">Message</div>
+        <div class="input-group">
+          <textarea id="input-status-text" placeholder="What's on your mind..."></textarea>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="submitStatus()">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 14 loader -->
+    <div class="panel" id="panel-14">
+      <div class="panel-title">Loader</div>
+      <div class="panel-desc">Manage local JavaScript plugins that modify the League Client UI. Drop <code style="color:var(--accent)">.js</code> files or plugin folders (with <code style="color:var(--accent)">index.js</code>) into <strong>star/plugins/</strong>. Toggle to enable or disable. Disabled plugins use the <code style="color:var(--dim)">.js_</code> extension.</div>
+
+
+
+      <!-- DLL install status card -->
+      <div class="card" id="loader-status-card">
+        <div class="card-row">
+          <div>
+            <div class="card-label">DLL Status</div>
+            <div class="card-sub" id="loader-status-text" style="color:var(--yellow)">Not working right now — will be fixed in the next update.</div>
+          </div>
+          <span class="plugin-status off" id="loader-status-badge">SOON</span>
+        </div>
+        <div id="loader-league-dir-row" style="display:none; margin-top:10px;">
+          <div class="input-label">League Folder (override)</div>
+          <div class="path-row">
+            <input type="text" id="input-league-dir" placeholder="Auto-detected — leave blank to auto-detect" />
+          </div>
+        </div>
+        <div class="btn-row" id="loader-btn-row">
+          <button class="btn btn-primary" id="loader-btn-install" disabled style="opacity:0.35;cursor:not-allowed">Install Now</button>
+          <button class="btn btn-danger"  id="loader-btn-uninstall" style="display:none">Uninstall</button>
+        </div>
+        <div id="loader-error-msg" style="color:var(--red);font-size:11px;margin-top:8px;display:none"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-row">
+          <div>
+            <div class="card-label">Plugins Folder</div>
+            <div class="card-sub" id="loader-plugins-path">star/plugins/</div>
+          </div>
+          <button class="btn btn-ghost" onclick="openPluginsFolder()" style="flex-shrink:0">Open Folder</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-row" style="margin-bottom:14px">
+          <div class="card-label">Installed Plugins</div>
+          <button class="btn btn-ghost" onclick="refreshPlugins()" style="font-size:10px;padding:5px 10px">↻ Refresh</button>
+        </div>
+        <div id="plugin-list-container">
+          <div class="plugin-empty">Loading plugins...</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-label" style="margin-bottom:6px">How to install a plugin</div>
+        <div class="card-sub" style="line-height:1.9">
+          1. Put a <code style="color:var(--accent)">.js</code> file directly in <code style="color:var(--accent)">star/plugins/</code><br/>
+          2. Or create a folder <code style="color:var(--accent)">star/plugins/my-plugin/index.js</code><br/>
+          3. Click <strong>Refresh</strong> to see it listed above<br/>
+          4. Toggle the switch to enable / disable it
+        </div>
+      </div>
+    </div>
+
+    <!-- 15 settings -->
+    <div class="panel" id="panel-15">
+      <div class="panel-title">Settings</div>
+      <div class="panel-desc">Configure theme, delays, lobby reveal provider and Riot Client launch.</div>
+
+      <div class="card">
+        <div class="card-label">Theme</div>
+        <div class="card-sub">Visual appearance of the interface.</div>
+        <div class="theme-pill-group">
+          <button class="theme-pill active" id="theme-btn-night" onclick="applyTheme('night')">Night</button>
+          <button class="theme-pill" id="theme-btn-light" onclick="applyTheme('light')">Light</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-row">
+          <div>
+            <div class="card-label">Auto-launch Riot Client</div>
+            <div class="card-sub">When ON — star will start Riot Client on launch if it's not already running.</div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="toggle-riot-autolaunch" onchange="onRiotAutoLaunchChange()" />
+            <div class="toggle-track"><div class="toggle-thumb"></div></div>
+          </label>
+        </div>
+        <div class="card-label" style="margin-top:18px;margin-bottom:6px">Riot Client Executable Path</div>
+        <div class="card-sub" style="margin-bottom:8px">Full path to <code style="color:var(--accent)">Riot Client.exe</code> — e.g. <code style="color:var(--dim)">C:\Riot Games\Riot Client\RiotClientElectron\Riot Client.exe</code></div>
+        <div class="path-row">
+          <input type="text" id="input-riot-path" placeholder="C:\Riot Games\Riot Client\RiotClientElectron\Riot Client.exe" />
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Lobby Reveal Provider</div>
+        <div class="card-sub">Choose the analytics service opened when inspecting lobbies.</div>
+        <div class="input-group">
+          <select id="cfg-provider" style="max-width:260px;">
+            <option value="porofessor">Porofessor</option>
+            <option value="opgg">OP.GG</option>
+            <option value="ugg">U.GG</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Automation Delays</div>
+        <div class="card-sub" style="margin-bottom:14px">Fine-tune response delay (seconds) for each module.</div>
+        <div class="stepper-list">
+          <div class="stepper-item">
+            <span class="stepper-label">Auto Accept:</span>
+            <div class="stepper">
+              <button onclick="changeDelay('aa', -0.1)">−</button>
+              <span id="delay-val-aa">0.0s</span>
+              <button onclick="changeDelay('aa', 0.1)">+</button>
+            </div>
+          </div>
+          <div class="stepper-item">
+            <span class="stepper-label">Instalock:</span>
+            <div class="stepper">
+              <button onclick="changeDelay('il', -0.1)">−</button>
+              <span id="delay-val-il">0.3s</span>
+              <button onclick="changeDelay('il', 0.1)">+</button>
+            </div>
+          </div>
+          <div class="stepper-item">
+            <span class="stepper-label">AutoBan:</span>
+            <div class="stepper">
+              <button onclick="changeDelay('ab', -0.1)">−</button>
+              <span id="delay-val-ab">0.3s</span>
+              <button onclick="changeDelay('ab', 0.1)">+</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="submitSettings()">Save Settings</button>
+      </div>
+    </div>
+
+    <!-- 17 draft helper -->
+    <div class="panel" id="panel-17">
+      <div class="panel-title">Draft Helper</div>
+      <div class="panel-desc">Suggests the best picks for your role based on Lolalytics data and your champion mastery.</div>
+
+      <!-- Draft Helper warning banner -->
+      <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:14px;padding:10px 14px;
+                  background:rgba(255,180,0,0.08);border:1px solid rgba(255,180,0,0.45);
+                  border-radius:4px;font-size:12px;color:#f5c842;">
+        <span style="font-size:16px;line-height:1.2;flex-shrink:0;">⚠️</span>
+        <span>
+          <strong>Work in progress</strong> — Draft Helper may not work correctly in all situations.
+          Suggestions depend on Lolalytics API availability and accurate champ-select data from the LCU.
+          If results look wrong or the feature fails to load, try <em>Analyze Now</em> again or disable Auto Analyze.
+        </span>
+      </div>
+
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-row" style="flex-wrap:wrap;gap:8px;">
+          <div>
+            <div class="card-label">Rank Bracket</div>
+            <div style="display:flex;gap:8px;margin-top:4px;">
+              <button class="theme-pill active" id="rank-btn-emerald" onclick="setDraftRank('emerald')">Emerald+</button>
+              <button class="theme-pill" id="rank-btn-master" onclick="setDraftRank('master')">Master+</button>
+            </div>
+          </div>
+          <div id="draftRoleDisplay" style="display:none;align-items:center;gap:6px;padding:4px 10px;background:rgba(200,245,66,0.08);border:1px solid var(--border);border-radius:4px;">
+            <span style="font-size:10px;color:var(--muted)">Your role:</span>
+            <span id="draftRoleLabel" style="font-size:12px;font-weight:700;color:var(--accent);text-transform:uppercase;"></span>
+          </div>
+        </div>
+        <div class="card-row" style="margin-top:10px;">
+          <label class="toggle" title="Auto-refresh every 8s during champ select">
+            <input type="checkbox" id="toggle-draft-auto" onchange="setDraftAuto(this.checked)" />
+            <div class="toggle-track"><div class="toggle-thumb"></div></div>
+          </label>
+          <div style="margin-left:8px;">
+            <div class="card-label">Auto Analyze</div>
+            <div class="card-sub">Updates automatically when picks change</div>
+          </div>
+          <button class="btn btn-primary" style="margin-left:auto;" onclick="fetchDraft()">Analyze Now</button>
+        </div>
+      </div>
+
+      <!-- YOUR PICK NOW banner — shown when it's the local player's pick action -->
+      <div id="draftMyTurnBanner" style="display:none;margin-bottom:14px;padding:10px 16px;
+          background:rgba(200,245,66,0.18);border:1px solid var(--accent);border-radius:4px;
+          align-items:center;gap:10px;animation:draftPulse 1s ease-in-out infinite alternate;">
+        <span style="font-size:18px;">⚡</span>
+        <span style="font-size:13px;font-weight:700;color:var(--accent);letter-spacing:0.5px;">YOUR PICK — check suggestions below</span>
+      </div>
+      <style>
+        @keyframes draftPulse {
+          from { box-shadow: 0 0 0 0 rgba(200,245,66,0.4); }
+          to   { box-shadow: 0 0 0 6px rgba(200,245,66,0); }
+        }
+      </style>
+
+      <div id="draftMyPickBar" style="display:none;margin-bottom:14px;padding:10px 14px;background:rgba(200,245,66,0.06);border:1px solid var(--border);border-radius:4px;">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:6px;">Your pick:</div>
+        <div id="draftMyPickIcon" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+      </div>
+
+      <div id="draftEnemyBar" style="display:none;margin-bottom:14px;">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:6px;">Enemy picks:</div>
+        <div id="draftEnemyIcons" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+      </div>
+
+      <div id="draftAllyBar" style="display:none;margin-bottom:14px;">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:6px;">Allied picks:</div>
+        <div id="draftAllyIcons" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+      </div>
+
+      <div id="draftColumns" style="display:none;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <div style="font-size:12px;font-weight:700;color:#4fc3f7;margin-bottom:10px;">
+            🎯 Comfort Pick <span style="font-size:10px;font-weight:400;color:var(--muted)">Champs you play</span>
+          </div>
+          <div id="draftComfortList" style="display:flex;flex-direction:column;gap:8px;"></div>
+        </div>
+        <div>
+          <div style="font-size:12px;font-weight:700;color:#ffd54f;margin-bottom:10px;">
+            ⚡ Best Pick <span style="font-size:10px;font-weight:400;color:var(--muted)">Strongest vs enemy</span>
+          </div>
+          <div id="draftBestList" style="display:flex;flex-direction:column;gap:8px;"></div>
+        </div>
+      </div>
+
+      <div id="draftEmpty" class="card" style="color:var(--muted);text-align:center;padding:24px;">
+        Enter champion select and click Analyze Now
+      </div>
+    </div>
+
+  </div>
+
+  <!-- activity strip -->
+  <div class="activity">
+    <div class="activity-header">
+      <span class="activity-title">activity</span>
+      <span class="activity-tag">live</span>
+    </div>
+    <div class="activity-log" id="activity-log">
+      <div class="log-entry">
+        <span class="log-time">--:--</span>
+        <span class="log-msg system">star ready — waiting for league client</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- toast -->
+<div class="toast-container" id="toast-box"></div>
+
+<!-- confirm overlay -->
+<div class="overlay" id="confirm-overlay">
+  <div class="dialog">
+    <div class="dialog-title" id="confirm-title"></div>
+    <div class="dialog-body" id="confirm-body"></div>
+    <div class="dialog-actions">
+      <button class="btn btn-ghost" onclick="closeConfirm()">Cancel</button>
+      <button class="btn btn-danger" id="confirm-ok">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- modal (champion / skin / icon picker) -->
+<div class="modal-overlay hidden" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">Select</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+// ── sidebar definition ────────────────────────────────────────────────────────
+const NAV = [
+  { cat: "AUTOMATION", items: [
+    { num: 1, title: "Auto Accept",     badge: true },
+    { num: 2, title: "Instalock",       badge: true },
+    { num: 3, title: "AutoBan",         badge: true },
+  ]},
+  { cat: "TOOLS", items: [
+    { num: 4,  title: "Lobby Reveal" },
+    { num: 17, title: "Draft Helper" },
+    { num: 5,  title: "Dodge" },
+    { num: 6,  title: "Restart UX" },
+    { num: 7,  title: "Disconnect Chat", badge: true },
+    { num: 8,  title: "Remove Friends" },
+  ]},
+  { cat: "CUSTOMIZATION", items: [
+    { num: 9,  title: "Client-Only Icon" },
+    { num: 10, title: "Profile Background" },
+    { num: 11, title: "Riot ID" },
+    { num: 12, title: "Profile Badges" },
+    { num: 13, title: "Status Message" },
+  ]},
+  { cat: "SYSTEM", items: [
+    { num: 14, title: "Loader",   badge: true },
+    { num: 15, title: "Settings" },
+  ]},
+];
+
+let currentPanel = 1;
+let allChampions = [];
+let allSkins     = [];
+let stepperValues = { aa: 0.0, il: 0.3, ab: 0.3 };
+
+function $(id) { return document.getElementById(id); }
+
+// ── theme ─────────────────────────────────────────────────────────────────────
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('star_theme', theme);
+  const nightBtn = $('theme-btn-night');
+  const lightBtn = $('theme-btn-light');
+  if (nightBtn) nightBtn.classList.toggle('active', theme === 'night');
+  if (lightBtn) lightBtn.classList.toggle('active', theme === 'light');
+}
+
+// Apply saved theme immediately before anything renders
+(function() {
+  const saved = localStorage.getItem('star_theme') || 'night';
+  applyTheme(saved);
+})();
+
+// ── build sidebar ─────────────────────────────────────────────────────────────
+(function buildSidebar() {
+  const nav = $('sidebar');
+  NAV.forEach(group => {
+    const lbl = document.createElement('div');
+    lbl.className = 'category-label';
+    lbl.textContent = group.cat;
+    nav.appendChild(lbl);
+    group.items.forEach(m => {
+      const item = document.createElement('div');
+      item.className = 'nav-item' + (m.num === 1 ? ' active' : '');
+      item.id = 'nav-' + m.num;
+      item.onclick = () => selectPanel(m.num);
+      item.innerHTML = `
+        <span class="nav-num">${String(m.num).padStart(2,'0')}</span>
+        <span class="nav-name">${m.title}</span>
+        ${m.badge !== undefined ? `<span class="nav-badge badge-off" id="badge-${m.num}"></span>` : '<span></span>'}
+      `;
+      nav.appendChild(item);
+    });
+  });
+})();
+
+function selectPanel(num) {
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(el => el.classList.remove('active'));
+  const navEl = $('nav-' + num);
+  if (navEl) navEl.classList.add('active');
+  const panelEl = $('panel-' + num);
+  if (panelEl) panelEl.classList.add('active');
+  currentPanel = num;
+  if (num === 14) { refreshPlugins(); refreshLoaderStatus(); }
+  stopAutoRevealPolling();
+}
+
+selectPanel(1);
+
+// ── toast ─────────────────────────────────────────────────────────────────────
+function toast(msg, type = 'info') {
+  const box = $('toast-box');
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  el.textContent = msg;
+  box.appendChild(el);
+  setTimeout(() => el.remove(), 3100);
+}
+
+// ── api ───────────────────────────────────────────────────────────────────────
+async function api(path, method = 'GET', body = null) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(path, opts);
+  return res.json();
+}
+
+// ── confirm ───────────────────────────────────────────────────────────────────
+function showConfirm(title, body, cb) {
+  $('confirm-title').textContent = title;
+  $('confirm-body').textContent = body;
+  $('confirm-ok').onclick = () => { closeConfirm(); cb(); };
+  $('confirm-overlay').classList.add('show');
+}
+function closeConfirm() { $('confirm-overlay').classList.remove('show'); }
+
+// ── modal ─────────────────────────────────────────────────────────────────────
+function showModal(title, bodyHTML) {
+  $('modal-title').textContent = title;
+  $('modal-body').innerHTML = bodyHTML;
+  $('modal-overlay').classList.remove('hidden');
+}
+function closeModal() { $('modal-overlay').classList.add('hidden'); }
+$('modal-overlay').addEventListener('click', e => { if (e.target === $('modal-overlay')) closeModal(); });
+
+// ── status poll ───────────────────────────────────────────────────────────────
+async function pollStatus() {
+  try {
+    const data = await api('/api/status');
+    const dot = $('dot');
+    const acct = $('account-text');
+    if (data.connected) {
+      dot.className = 'dot live';
+      acct.textContent = data.account_text || `${data.account_name}#${data.account_tag}`;
+    } else {
+      dot.className = 'dot';
+      acct.textContent = 'not connected';
+    }
+
+    const f = data.features || {};
+
+    $('toggle-auto-accept').checked = Boolean(f.auto_accept);
+    setBadge(1, Boolean(f.auto_accept));
+    const aaSub = $('aa-sub');
+    if (aaSub) aaSub.textContent = f.auto_accept ? 'Armed — will accept next ready check' : 'Disarmed';
+
+    $('toggle-instalock').checked = Boolean(f.instalock_enabled);
+    setBadge(2, Boolean(f.instalock_enabled));
+    const ilChamp = f.instalock_champion || 'Random';
+    const ilEl1 = $('val-instalock-champ'); if (ilEl1) ilEl1.textContent = ilChamp;
+    const ilEl2 = $('val-instalock-champ-picker'); if (ilEl2) ilEl2.textContent = ilChamp;
+
+    $('toggle-autoban').checked = Boolean(f.autoban_enabled);
+    setBadge(3, Boolean(f.autoban_enabled));
+    const abChamp = f.autoban_champion || 'None';
+    const abEl1 = $('val-autoban-champ'); if (abEl1) abEl1.textContent = abChamp;
+    const abEl2 = $('val-autoban-champ-picker'); if (abEl2) abEl2.textContent = abChamp;
+
+    const chatBadge = $('badge-chat-state');
+    if (chatBadge) {
+      const offline = f.chat_state === 'OFFLINE';
+      chatBadge.textContent = f.chat_state || 'LIVE';
+      chatBadge.className = 'inline-badge ' + (offline ? 'badge-on' : 'badge-off');
+    }
+    setBadge(7, f.chat_state === 'OFFLINE');
+
+    const cfg = data.config || {};
+    stepperValues.aa = cfg.auto_accept_delay || 0.0;
+    stepperValues.il = cfg.instalock_delay   || 0.3;
+    stepperValues.ab = cfg.autoban_delay     || 0.3;
+    updateDelayDisplays();
+    const prov = $('cfg-provider');
+    if (prov && cfg.lobby_reveal_provider) prov.value = cfg.lobby_reveal_provider;
+
+    // Riot Client settings
+    const ral = $('toggle-riot-autolaunch');
+    const rpath = $('input-riot-path');
+    if (ral && cfg.riot_client_auto_launch !== undefined) ral.checked = Boolean(cfg.riot_client_auto_launch);
+    if (rpath && cfg.riot_client_path) rpath.value = cfg.riot_client_path;
+
+  } catch(e) {}
+}
+
+function setBadge(num, on) {
+  const b = $('badge-' + num);
+  if (!b) return;
+  b.className = 'nav-badge ' + (on ? 'badge-on' : 'badge-off');
+  b.textContent = on ? 'on' : '';
+}
+
+// ── automation ────────────────────────────────────────────────────────────────
+async function toggleAutoAccept() {
+  const res = await api('/api/auto-accept/toggle', 'POST');
+  if (res.ok) {
+    toast(res.enabled ? 'Auto Accept enabled' : 'Auto Accept disabled', res.enabled ? 'success' : 'info');
+    pollStatus();
+  } else {
+    toast(res.error, 'error');
+    $('toggle-auto-accept').checked = !$('toggle-auto-accept').checked;
+  }
+}
+
+async function toggleInstalock() {
+  const res = await api('/api/instalock/toggle', 'POST');
+  if (res.ok) {
+    toast(res.enabled ? `Instalock (${res.champion}) enabled` : 'Instalock disabled', res.enabled ? 'success' : 'info');
+    pollStatus();
+  } else {
+    toast(res.error, 'error');
+    $('toggle-instalock').checked = !$('toggle-instalock').checked;
+  }
+}
+
+async function toggleAutoBan() {
+  const res = await api('/api/autoban/toggle', 'POST');
+  if (res.ok) {
+    toast(res.enabled ? `AutoBan (${res.champion}) enabled` : 'AutoBan disabled', res.enabled ? 'success' : 'info');
+    pollStatus();
+  } else {
+    toast(res.error, 'error');
+    $('toggle-autoban').checked = !$('toggle-autoban').checked;
+  }
+}
+
+// ── champion picker ───────────────────────────────────────────────────────────
+async function openChampionPicker(mode) {
+  showModal(
+    mode === 'instalock' ? 'Select Instalock Champion' : 'Select AutoBan Champion',
+    '<div style="color:var(--muted)">Loading champions...</div>'
+  );
+  if (allChampions.length === 0) {
+    const res = await api('/api/champions');
+    if (res.ok) allChampions = res.champions;
+  }
+  const modalBody = $('modal-body');
+  modalBody.innerHTML = `
+    <input type="text" class="modal-search" id="champ-filter" placeholder="Search champion..." />
+    <div class="modal-stats" id="champ-count"></div>
+    <div class="modal-list-wrap" id="champ-list"></div>
+  `;
+  function renderList(query) {
+    const q = query.toLowerCase().trim();
+    const list = $('champ-list');
+    const filtered = allChampions.filter(c => c.toLowerCase().includes(q));
+    $('champ-count').textContent = `${filtered.length} champions`;
+    list.innerHTML = filtered.map(c =>
+      `<div class="modal-item" onclick="selectChampion('${mode}','${c}')">
+        <span>${c}</span><span style="color:var(--muted);font-size:11px">›</span>
+      </div>`
+    ).join('') || '<div style="color:var(--muted);padding:12px;">No champions found</div>';
+  }
+  renderList('');
+  $('champ-filter').addEventListener('input', e => renderList(e.target.value));
+  $('champ-filter').focus();
+}
+
+async function selectChampion(mode, champ) {
+  closeModal();
+  const res = await api('/api/champion/set', 'POST', { mode, champion: champ });
+  if (res.ok) {
+    toast(`${mode === 'instalock' ? 'Instalock' : 'AutoBan'} set to ${champ}`, 'success');
+    pollStatus();
+  } else {
+    toast(res.error, 'error');
+  }
+}
+
+// ── skin picker ───────────────────────────────────────────────────────────────
+async function openSkinPicker() {
+  showModal('Browse All Champion Skins', '<div style="color:var(--muted);padding:8px;">Loading skins...</div>');
+  if (allSkins.length === 0) {
+    const res = await api('/api/skins');
+    if (res.ok) allSkins = res.skins;
+  }
+  const modalBody = $('modal-body');
+  modalBody.innerHTML = `
+    <input type="text" class="modal-search" id="skin-filter" placeholder="Search champion or skin name..." />
+    <div class="modal-stats">
+      <span id="skin-count">${allSkins.length} skins available</span>
+      <span>click to apply</span>
+    </div>
+    <div class="modal-list-wrap" id="skin-wrap"></div>
+  `;
+  let currentMatches = allSkins.slice();
+  let renderOffset = 0;
+  const CHUNK = 150;
+  const wrap = $('skin-wrap');
+
+  function appendChunk() {
+    const slice = currentMatches.slice(renderOffset, renderOffset + CHUNK);
+    if (!slice.length) return;
+    const frag = document.createDocumentFragment();
+    slice.forEach(s => {
+      const div = document.createElement('div');
+      div.className = 'modal-item';
+      div.innerHTML = `<span><strong>${s.champion}</strong> — ${s.name}</span><span style="color:var(--muted);font-size:11px">${s.id}</span>`;
+      div.onclick = () => selectSkin(s.id, s.champion + ' - ' + s.name);
+      frag.appendChild(div);
+    });
+    wrap.appendChild(frag);
+    renderOffset += slice.length;
+  }
+
+  function renderFiltered(query) {
+    const q = query.toLowerCase().trim();
+    wrap.innerHTML = '';
+    renderOffset = 0;
+    currentMatches = q ? allSkins.filter(s => (s.champion + ' ' + s.name).toLowerCase().includes(q)) : allSkins.slice();
+    $('skin-count').textContent = `${currentMatches.length} / ${allSkins.length} skins`;
+    if (!currentMatches.length) { wrap.innerHTML = '<div style="color:var(--muted);padding:12px;">No skins found</div>'; return; }
+    appendChunk();
+  }
+
+  wrap.addEventListener('scroll', () => {
+    if (wrap.scrollHeight - wrap.scrollTop - wrap.clientHeight < 300) appendChunk();
+  });
+  renderFiltered('');
+  $('skin-filter').addEventListener('input', e => renderFiltered(e.target.value));
+  $('skin-filter').focus();
+}
+
+async function selectSkin(skinId, name) {
+  closeModal();
+  const res = await api('/api/background', 'POST', { skin_id: skinId, skin_name: name });
+  if (res.ok) toast(`Background changed to ${name}`, 'success');
+  else toast(res.error, 'error');
+}
+
+// ── icon picker ───────────────────────────────────────────────────────────────
+async function openIconPicker() {
+  showModal('Browse All Icons — Client Only', '<div style="color:var(--muted);padding:8px;">Loading icons...</div>');
+  let allIcons = [];
+  const res = await api('/api/icons');
+  if (res.ok) allIcons = res.icons;
+  else { $('modal-body').innerHTML = `<div style="color:var(--red)">${res.error}</div>`; return; }
+
+  const modalBody = $('modal-body');
+  modalBody.innerHTML = `
+    <input type="text" class="modal-search" id="icon-filter" placeholder="Search by icon ID..." />
+    <div class="modal-stats">
+      <span id="icon-count">${allIcons.length} icons available</span>
+      <span>click to apply — client only</span>
+    </div>
+    <div class="icon-grid" id="icon-wrap"></div>
+  `;
+  let currentMatches = allIcons.slice();
+  let renderOffset = 0;
+  const CHUNK = 80;
+  const wrap = $('icon-wrap');
+
+  function appendChunk() {
+    const slice = currentMatches.slice(renderOffset, renderOffset + CHUNK);
+    if (!slice.length) return;
+    const frag = document.createDocumentFragment();
+    slice.forEach(ic => {
+      const div = document.createElement('div');
+      div.className = 'icon-tile';
+      const img = document.createElement('img');
+      img.src = ic.url; img.alt = ic.id;
+      img.onerror = () => { img.style.display = 'none'; };
+      const label = document.createElement('span');
+      label.textContent = ic.id;
+      div.appendChild(img); div.appendChild(label);
+      div.onclick = () => selectIcon(ic.id);
+      frag.appendChild(div);
+    });
+    wrap.appendChild(frag);
+    renderOffset += slice.length;
+  }
+
+  function renderFiltered(query) {
+    const q = query.trim();
+    wrap.innerHTML = ''; renderOffset = 0;
+    currentMatches = q ? allIcons.filter(ic => String(ic.id).includes(q)) : allIcons.slice();
+    $('icon-count').textContent = `${currentMatches.length} / ${allIcons.length} icons`;
+    if (!currentMatches.length) { wrap.innerHTML = '<div style="color:var(--muted);padding:12px;grid-column:1/-1;">No icons found</div>'; return; }
+    appendChunk();
+  }
+
+  wrap.addEventListener('scroll', () => {
+    if (wrap.scrollHeight - wrap.scrollTop - wrap.clientHeight < 300) appendChunk();
+  });
+  renderFiltered('');
+  $('icon-filter').addEventListener('input', e => renderFiltered(e.target.value));
+  $('icon-filter').focus();
+}
+
+async function selectIcon(iconId) {
+  closeModal();
+  const res = await api('/api/icon', 'POST', { icon_id: iconId, client_only: true });
+  if (res.ok) toast(`Client icon set to ${iconId}!`, 'success');
+  else toast(res.error, 'error');
+}
+
+// ── riot id ───────────────────────────────────────────────────────────────────
+async function submitRiotID() {
+  const name = $('input-riot-name').value.trim();
+  const tag  = $('input-riot-tag').value.trim();
+  if (!name || !tag) { toast('Game name and tag are required', 'error'); return; }
+  const res = await api('/api/riotid', 'POST', { name, tag });
+  if (res.ok) {
+    toast('Riot ID updated!', 'success');
+    $('input-riot-name').value = '';
+    $('input-riot-tag').value = '';
+  } else {
+    toast(res.error, 'error');
+  }
+}
+
+// ── badges ────────────────────────────────────────────────────────────────────
+function onBadgeModeChange() {
+  const mode = $('select-badge-mode').value;
+  $('badge-gid-wrap').style.display = mode === 'glitched' ? 'block' : 'none';
+}
+
+async function submitBadges() {
+  const mode = $('select-badge-mode').value;
+  const gid  = $('input-badge-gid').value || '0';
+  const res  = await api('/api/badges', 'POST', { mode, glitched_id: gid });
+  if (res.ok) toast('Badges updated!', 'success');
+  else toast(res.error, 'error');
+}
+
+// ── status message ────────────────────────────────────────────────────────────
+async function submitStatus() {
+  const text = $('input-status-text').value;
+  const res  = await api('/api/status-msg', 'POST', { status: text });
+  if (res.ok) {
+    toast('Status message updated!', 'success');
+    $('input-status-text').value = '';
+  } else {
+    toast(res.error, 'error');
+  }
+}
+
+// ── tools ─────────────────────────────────────────────────────────────────────
+async function submitReveal() {
+  toast('Revealing lobby...', 'info');
+  const res = await api('/api/reveal', 'POST');
+  if (res.ok) {
+    toast('Lobby revealed!', 'success');
+    if (res.url) window.open(res.url, '_blank');
+  } else {
+    toast(res.error, 'error');
+  }
+}
+
+function confirmDodge() {
+  showConfirm('Dodge champion select?', 'You will take an LP penalty. This cannot be undone.', submitDodge);
+}
+async function submitDodge() {
+  const res = await api('/api/dodge', 'POST');
+  if (res.ok) toast('Dodged', 'success');
+  else toast(res.error, 'error');
+}
+
+async function submitRestartUX() {
+  const res = await api('/api/restart-ux', 'POST');
+  if (res.ok) toast('Client UI restart requested!', 'success');
+  else toast(res.error, 'error');
+}
+
+async function submitToggleChat() {
+  const res = await api('/api/chat/toggle', 'POST');
+  if (res.ok) {
+    toast(`Chat state: ${res.state}`, 'success');
+    pollStatus();
+  } else {
+    toast(res.error, 'error');
+  }
+}
+
+function confirmRemoveFriends() {
+  showConfirm('Remove ALL friends?', 'Every friend on this account will be permanently removed. This cannot be undone.', submitRemoveFriends);
+}
+async function submitRemoveFriends() {
+  const res = await api('/api/remove-friends', 'POST');
+  if (res.ok) toast(`Removed ${res.count} friends`, 'success');
+  else toast(res.error, 'error');
+}
+
+// ── settings / delays ─────────────────────────────────────────────────────────
+function changeDelay(key, delta) {
+  stepperValues[key] = Math.max(0, Math.min(2, Math.round((stepperValues[key] + delta) * 10) / 10));
+  updateDelayDisplays();
+}
+function updateDelayDisplays() {
+  const aa = $('delay-val-aa'); if (aa) aa.textContent = stepperValues.aa.toFixed(1) + 's';
+  const il = $('delay-val-il'); if (il) il.textContent = stepperValues.il.toFixed(1) + 's';
+  const ab = $('delay-val-ab'); if (ab) ab.textContent = stepperValues.ab.toFixed(1) + 's';
+}
+
+function onRiotAutoLaunchChange() {
+  // Saved on submitSettings
+}
+
+async function submitSettings() {
+  const prov  = $('cfg-provider').value;
+  const rAuto = $('toggle-riot-autolaunch').checked;
+  const rPath = $('input-riot-path').value.trim();
+  const res   = await api('/api/settings', 'POST', {
+    provider:                 prov,
+    auto_accept_delay:        stepperValues.aa,
+    instalock_delay:          stepperValues.il,
+    autoban_delay:            stepperValues.ab,
+    riot_client_auto_launch:  rAuto,
+    riot_client_path:         rPath,
+  });
+  if (res.ok) toast('Settings saved!', 'success');
+  else toast(res.error, 'error');
+}
+
+// ── Loader ────────────────────────────────────────────────────────────────────
+let _plugins = [];
+
+async function refreshPlugins() {
+  const container = $('plugin-list-container');
+  if (!container) return;
+  try {
+    const res = await api('/api/plugins');
+    if (!res.ok) { container.innerHTML = `<div class="plugin-empty" style="color:var(--red)">${res.error}</div>`; return; }
+    _plugins = res.plugins || [];
+    renderPlugins();
+    // Update badge
+    const anyEnabled = _plugins.some(p => p.enabled);
+    setBadge(14, anyEnabled);
+  } catch(e) {
+    container.innerHTML = `<div class="plugin-empty" style="color:var(--red)">Failed to load plugins</div>`;
+  }
+}
+
+function renderPlugins() {
+  const container = $('plugin-list-container');
+  if (!container) return;
+  if (_plugins.length === 0) {
+    container.innerHTML = `<div class="plugin-empty">No plugins found in <code style="color:var(--accent)">star/plugins/</code><br/><br/>Drop <code>.js</code> files or plugin folders (containing <code>index.js</code>) into the plugins folder and click Refresh.</div>`;
+    return;
+  }
+  container.innerHTML = '';
+  const list = document.createElement('div');
+  list.className = 'plugin-list';
+  _plugins.forEach((plugin, idx) => {
+    const item = document.createElement('div');
+    item.className = 'plugin-item ' + (plugin.enabled ? 'plugin-enabled' : 'plugin-disabled');
+    item.id = 'plugin-item-' + idx;
+
+    let metaParts = [];
+    if (plugin.author) metaParts.push(plugin.author);
+    if (plugin.link) metaParts.push(`<a href="${plugin.link}" target="_blank">${plugin.link}</a>`);
+    const metaHTML = metaParts.length ? `<div class="plugin-meta">${metaParts.join(' · ')}</div>` : '';
+    const descHTML = plugin.description ? `<div class="plugin-desc">${plugin.description}</div>` : '';
+
+    item.innerHTML = `
+      <div class="plugin-info">
+        <div class="plugin-name">${plugin.name}</div>
+        ${metaHTML}
+        ${descHTML}
+      </div>
+      <span class="plugin-status ${plugin.enabled ? 'on' : 'off'}">${plugin.enabled ? 'ON' : 'OFF'}</span>
+      <label class="toggle" style="margin-left:10px">
+        <input type="checkbox" ${plugin.enabled ? 'checked' : ''} onchange="togglePlugin(${idx})" />
+        <div class="toggle-track"><div class="toggle-thumb"></div></div>
+      </label>
+    `;
+    list.appendChild(item);
+  });
+  container.appendChild(list);
+}
+
+async function togglePlugin(idx) {
+  const plugin = _plugins[idx];
+  if (!plugin) return;
+  const res = await api('/api/plugins/toggle', 'POST', { path: plugin.path });
+  if (res.ok) {
+    plugin.enabled = res.enabled;
+    plugin.path    = res.new_path;
+    toast(`Plugin ${plugin.name} ${res.enabled ? 'enabled' : 'disabled'}`, res.enabled ? 'success' : 'info');
+    renderPlugins();
+    setBadge(14, _plugins.some(p => p.enabled));
+  } else {
+    toast(res.error || 'Toggle failed', 'error');
+    renderPlugins(); // restore UI
+  }
+}
+
+async function openPluginsFolder() {
+  const res = await api('/api/plugins/open-folder', 'POST');
+  if (!res.ok) toast(res.error || 'Could not open folder', 'error');
+}
+
+// ── Loader install/uninstall ──────────────────────────────────────────────────
+// DLL install is temporarily disabled — will be fixed in the next update.
+async function refreshLoaderStatus() { /* disabled */ }
+
+
+
+async function loaderInstall() {
+  const dirInput = $('input-league-dir');
+  const leagueDir = dirInput ? dirInput.value.trim() : '';
+  const btn = $('loader-btn-install');
+  btn.disabled = true;
+  btn.textContent = 'Installing...';
+  try {
+    const res = await api('/api/loader/install', 'POST', leagueDir ? { league_dir: leagueDir } : {});
+    if (res.ok) {
+      toast('Loader installed — League UX restarting to activate', 'success');
+    } else {
+      toast(res.error || 'Install failed', 'error');
+    }
+    await refreshLoaderStatus();
+  } catch(e) {
+    toast('Install error: ' + e, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Install Now';
+  }
+}
+
+async function loaderUninstall() {
+  const dirInput = $('input-league-dir');
+  const leagueDir = dirInput ? dirInput.value.trim() : '';
+  const btn = $('loader-btn-uninstall');
+  btn.disabled = true;
+  btn.textContent = 'Removing...';
+  try {
+    const res = await api('/api/loader/uninstall', 'POST', leagueDir ? { league_dir: leagueDir } : {});
+    if (res.ok) {
+      toast('Loader uninstalled — restart League to deactivate', 'info');
+    } else {
+      toast(res.error || 'Uninstall failed', 'error');
+    }
+    await refreshLoaderStatus();
+  } catch(e) {
+    toast('Uninstall error: ' + e, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Uninstall';
+  }
+}
+
+// stub so selectPanel's stopAutoRevealPolling() call doesn't throw
+var _autoRevealTimer = null;
+function stopAutoRevealPolling() { clearInterval(_autoRevealTimer); _autoRevealTimer = null; }
+
+// ── Draft Helper ──────────────────────────────────────────────────────────────
+var _draftRank      = 'emerald';
+var _lastEnemyKey   = '';
+var _lastAllyKey    = '';
+var _lastMyPick     = '';
+var _lastMyTurn     = false;
+var _draftAutoTimer = null;
+var _draftPending   = false;
+
+const LANE_LABELS = {
+  'top': 'Top', 'jungle': 'Jungle', 'mid': 'Mid',
+  'bot': 'ADC', 'adc': 'ADC', 'support': 'Support', 'utility': 'Support'
+};
+
+function setDraftRank(rank) {
+  _draftRank = rank;
+  $('rank-btn-emerald').classList.toggle('active', rank === 'emerald');
+  $('rank-btn-master').classList.toggle('active', rank === 'master');
+  if ($('draftColumns').style.display !== 'none') fetchDraft();
+}
+
+function setDraftAuto(enabled) {
+  if (enabled) {
+    if (_draftAutoTimer) return;
+    // 2.5s — fast enough to catch each pick phase without hammering the server
+    _draftAutoTimer = setInterval(_draftAutoPoll, 2500);
+    _draftAutoPoll();
+  } else {
+    clearInterval(_draftAutoTimer);
+    _draftAutoTimer = null;
+  }
+}
+
+async function _draftAutoPoll() {
+  if (_draftPending) return;
+  try {
+    const res  = await fetch('/api/draft-suggestions?rank=' + _draftRank + '&quick=1');
+    if (!res.ok) return;  // 400 = not in champ select yet, just skip silently
+    const json = await res.json();
+    if (json.status !== 'ok' || !json.data) return;
+    const d        = json.data;
+    const enemyKey = (d.enemy_picks || []).join(',');
+    const allyKey  = (d.ally_picks  || []).join(',');
+    const myPick   = d.my_pick || '';
+    const myTurn   = !!d.is_my_turn;
+    // Re-render whenever anything relevant changed
+    if (
+      enemyKey !== _lastEnemyKey ||
+      allyKey  !== _lastAllyKey  ||
+      myPick   !== _lastMyPick   ||
+      myTurn   !== _lastMyTurn
+    ) {
+      // Update keys BEFORE renderDraft so renderDraft doesn't skip the bars
+      _lastEnemyKey = enemyKey;
+      _lastAllyKey  = allyKey;
+      _lastMyPick   = myPick;
+      _lastMyTurn   = myTurn;
+      renderDraft(d);
+    }
+  } catch {}
+}
+
+async function fetchDraft() {
+  if (_draftPending) return;
+  _draftPending = true;
+  $('draftEmpty').textContent = 'Analyzing matchup...';
+  $('draftEmpty').style.display = 'block';
+  $('draftColumns').style.display = 'none';
+  // Reset keys so a fresh fetch always redraws pick bars
+  _lastEnemyKey = '';
+  _lastAllyKey  = '';
+  _lastMyPick   = '';
+  _lastMyTurn   = false;
+  try {
+    const res  = await fetch('/api/draft-suggestions?rank=' + _draftRank);
+    const json = await res.json();
+    if (json.status !== 'ok' || (json.data && json.data.error)) {
+      const msg = json.data
+        ? (json.data.error || 'Enter champion select first')
+        : (json.message || 'Enter champion select first');
+      $('draftEmpty').textContent = msg;
+      $('draftColumns').style.display = 'none';
+    } else {
+      renderDraft(json.data);
+    }
+  } catch(e) {
+    $('draftEmpty').textContent = 'Failed to fetch: ' + e.message;
+  } finally {
+    _draftPending = false;
+  }
+}
+
+function draftChampIcon(name) {
+  const clean = name.replace(/ /g, '').replace(/'/g, '').replace(/\./g, '');
+  const FIX = { 'Wukong': 'MonkeyKing', 'NunuWillump': 'Nunu' };
+  return 'https://ddragon.leagueoflegends.com/cdn/img/champion/tiles/' + (FIX[clean] || clean) + '_0.jpg';
+}
+
+function renderPickBar(containerId, barId, picks, borderColor) {
+  const bar = $(barId);
+  if (!picks || !picks.length) { bar.style.display = 'none'; return; }
+  $(containerId).innerHTML = picks.map(name => `
+    <div style="display:flex;flex-direction:column;align-items:center;gap:3px;">
+      <img src="${draftChampIcon(name)}" title="${name}"
+        style="width:44px;height:44px;border-radius:6px;border:2px solid ${borderColor};object-fit:cover;"
+        onerror="this.style.opacity='0.3'">
+      <span style="font-size:9px;color:var(--muted);text-align:center;max-width:44px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${name}</span>
+    </div>`).join('');
+  bar.style.display = 'block';
+}
+
+function renderDraft(data) {
+  // Role badge
+  if (data.lane) {
+    const roleEl = $('draftRoleDisplay');
+    $('draftRoleLabel').textContent = LANE_LABELS[data.lane] || data.lane;
+    roleEl.style.display = 'flex';
+  }
+
+  // YOUR TURN banner — flashes when it's your pick action
+  const myTurnBanner = $('draftMyTurnBanner');
+  if (myTurnBanner) {
+    if (data.is_my_turn && data.my_action_type === 'pick') {
+      myTurnBanner.style.display = 'flex';
+    } else {
+      myTurnBanner.style.display = 'none';
+    }
+  }
+
+  // Your pick bar
+  const myPickBar = $('draftMyPickBar');
+  if (data.my_pick) {
+    $('draftMyPickIcon').innerHTML = `
+      <div style="display:flex;flex-direction:column;align-items:center;gap:3px;">
+        <img src="${draftChampIcon(data.my_pick)}" title="${data.my_pick}"
+          style="width:44px;height:44px;border-radius:6px;border:2px solid var(--accent);object-fit:cover;"
+          onerror="this.style.opacity='0.3'">
+        <span style="font-size:9px;color:var(--accent);font-weight:700;text-align:center;max-width:44px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${data.my_pick}</span>
+      </div>`;
+    myPickBar.style.display = 'block';
+  } else {
+    myPickBar.style.display = 'none';
+  }
+
+  // Enemy bar — always redraw (keys already updated by caller)
+  renderPickBar('draftEnemyIcons', 'draftEnemyBar', data.enemy_picks, 'var(--red)');
+
+  // Ally bar
+  renderPickBar('draftAllyIcons', 'draftAllyBar', data.ally_picks, '#4fc3f7');
+
+  if (!data.comfort_list.length && !data.best_list.length) {
+    $('draftEmpty').textContent = 'Waiting for enemy picks to calculate counters...';
+    $('draftEmpty').style.display = 'block';
+    $('draftColumns').style.display = 'none';
+    return;
+  }
+
+  $('draftEmpty').style.display = 'none';
+  $('draftColumns').style.display = 'grid';
+
+  $('draftComfortList').innerHTML = data.comfort_list.map((c, i) => draftChampCard(c, i === 0, true)).join('');
+  $('draftBestList').innerHTML    = data.best_list.map((c, i) => draftChampCard(c, i === 0, false)).join('');
+}
+
+function draftChampCard(c, isTop, isComfort) {
+  const wr = c.counter_score ? c.counter_score.toFixed(1) : (c.winrate || 0).toFixed(1);
+  const tierBadge = c.tier
+    ? `<span style="font-size:9px;padding:1px 5px;background:rgba(200,245,66,0.12);color:var(--accent);border-radius:3px;">${c.tier}</span>`
+    : '';
+  const masteryInfo = isComfort && c.mastery_level
+    ? `<div style="font-size:10px;color:var(--muted)">M${c.mastery_level} · ${Math.round((c.mastery_points||0)/1000)}k pts</div>`
+    : '';
+  const borderColor = isTop ? 'var(--accent)' : 'var(--border)';
+  const topGlow = isTop ? 'box-shadow:0 0 0 1px var(--accent) inset;' : '';
+  return `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;
+      background:var(--surface);border:1px solid ${borderColor};border-radius:4px;${topGlow}">
+    <div style="position:relative;flex-shrink:0;">
+      <img src="${c.icon_url}" alt="${c.champion}"
+        style="width:48px;height:48px;border-radius:6px;object-fit:cover;display:block;"
+        onerror="this.src='https://ddragon.leagueoflegends.com/cdn/img/champion/tiles/Annie_0.jpg'">
+      ${isTop ? '<div style="position:absolute;top:-4px;right:-4px;font-size:9px;background:var(--accent);color:#000;border-radius:2px;padding:0 3px;font-weight:700;">TOP</div>' : ''}
+    </div>
+    <div style="flex:1;min-width:0;">
+      <div style="font-size:13px;font-weight:700;display:flex;align-items:center;gap:5px;margin-bottom:2px;">
+        ${c.champion} ${tierBadge}
+      </div>
+      ${masteryInfo}
+      <div style="font-size:12px;color:var(--green);font-weight:700;">${wr}% WR</div>
+    </div>
+  </div>`;
+}
+
+// ── init ──────────────────────────────────────────────────────────────────────
+pollStatus();
+setInterval(pollStatus, 2000);
+refreshLoaderStatus();
+
+// activity log polling
+let _activitySince = 0;
+async function pollActivity() {
+  try {
+    const res = await fetch(`/api/activity?since=${_activitySince}`);
+    const data = await res.json();
+    if (data.entries && data.entries.length > 0) {
+      const log = $('activity-log');
+      data.entries.forEach(e => {
+        const div = document.createElement('div');
+        div.className = 'log-entry';
+        div.innerHTML = `<span class="log-time">${e.time}</span><span class="log-msg ${e.level}">${e.message}</span>`;
+        log.appendChild(div);
+        log.scrollTop = log.scrollHeight;
+      });
+      _activitySince = data.total;
+      // Trim to last 80 entries in DOM
+      while (log.children.length > 80) log.removeChild(log.firstChild);
+    }
+  } catch(e) {}
+}
+pollActivity();
+setInterval(pollActivity, 2500);
+</script>
+</body>
+</html>

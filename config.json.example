@@ -1,0 +1,25 @@
+{
+    "instalock": {
+        "enabled": false,
+        "champion": "Random",
+        "delay_seconds": 0.3
+    },
+    "autoban": {
+        "enabled": false,
+        "champion": "None",
+        "delay_seconds": 0.3
+    },
+    "auto_accept": {
+        "enabled": false,
+        "delay_seconds": 0.0
+    },
+    "lobby_reveal": {
+        "provider": "opgg"
+    },
+    "ragequeue": {
+        "enabled": false,
+        "queue_id": 420,
+        "first_position": "JUNGLE",
+        "second_position": "MIDDLE"
+    }
+}
